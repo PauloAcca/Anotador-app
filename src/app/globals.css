@@ -186,6 +186,11 @@ textarea.input-base {
   line-height: 1.55;
 }
 
+select option {
+  background-color: #141923;
+  color: var(--color-text-primary);
+}
+
 /* =========================================================
    SWITCH — píldora serena
    ========================================================= */
