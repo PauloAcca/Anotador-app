@@ -59,12 +59,29 @@ export interface Reading {
   id: string
   user_id: string
   course_id: string
+  assignment_id: string | null
   title: string
   url: string | null
   done: boolean
   done_at: string | null
   position: number
   created_at: string
+}
+
+export interface Assignment {
+  id: string
+  user_id: string
+  course_id: string
+  exam_id: string | null
+  title: string
+  description: string | null
+  due_date: string | null
+  grade: number | null
+  done: boolean
+  created_at: string
+  updated_at: string
+  // Relación opcional al consultar con join
+  exam?: Pick<Exam, 'id' | 'title' | 'exam_date' | 'kind'> | null
 }
 
 export interface Exam {

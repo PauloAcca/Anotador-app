@@ -16,17 +16,19 @@ import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ExamCard } from '@/components/exams/exam-card'
 import { ExamFormModal } from '@/components/courses/exam-form-modal'
-import type { Course, Exam } from '@/types/database'
+import type { Assignment, Course, Exam } from '@/types/database'
 
 type Filter = 'upcoming' | 'past'
 
 export function ExamsClient({
   courses,
   exams,
+  assignments,
   today,
 }: {
   courses: Course[]
   exams: Exam[]
+  assignments: Assignment[]
   today: string
 }) {
   const [filter, setFilter] = useState<Filter>('upcoming')
@@ -136,6 +138,9 @@ export function ExamsClient({
                   exam={exam}
                   today={today}
                   showCourse
+                  linkedTps={assignments.filter(
+                    (assignment) => assignment.exam_id === exam.id
+                  )}
                   onEdit={() => openEdit(exam)}
                   onToggleDone={() => handleToggleDone(exam)}
                   onDelete={() => handleDelete(exam)}

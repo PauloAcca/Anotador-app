@@ -185,10 +185,11 @@ function CourseCard({
   today: string
   onEdit: () => void
 }) {
-  const { course, readings, exams } = view
+  const { course, readings, exams, assignments } = view
   const progress = courseProgress(readings)
   const next = nextExam(exams, today)
   const grade = averageGrade(exams)
+  const tpsDone = assignments.filter((assignment) => assignment.done).length
 
   return (
     <div className="glass rounded-[var(--radius-lg)] p-4 relative group transition-all duration-300 hover:bg-[rgba(255,255,255,0.075)] hover:border-[rgba(255,255,255,0.14)]">
@@ -245,11 +246,18 @@ function CourseCard({
               </p>
             )}
           </div>
-          {grade !== null && (
-            <Badge variant="sage" className="text-[0.625rem] shrink-0">
-              Prom. {grade}
-            </Badge>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {assignments.length > 0 && (
+              <Badge variant="muted" className="text-[0.625rem]">
+                TPs {tpsDone}/{assignments.length}
+              </Badge>
+            )}
+            {grade !== null && (
+              <Badge variant="sage" className="text-[0.625rem]">
+                Prom. {grade}
+              </Badge>
+            )}
+          </div>
         </div>
       </Link>
 

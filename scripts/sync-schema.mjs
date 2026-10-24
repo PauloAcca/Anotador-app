@@ -1,17 +1,36 @@
 /**
- * Copia la migración canónica a public/ para que pueda descargarse
- * desde la pantalla de configuración inicial de la app.
+ * Junta todas las migraciones en public/anotador-schema.sql para que
+ * la pantalla de configuración inicial pueda copiarlas/descargarlas.
  *
  *   node scripts/sync-schema.mjs
  */
-import { copyFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const source = join(ROOT, 'supabase/migrations/00011_anotador_schema.sql')
+const migrationsDir = join(ROOT, 'supabase/migrations')
 const target = join(ROOT, 'public/anotador-schema.sql')
 
+const files = readdirSync(migrationsDir)
+  .filter((file) => file.endsWith('.sql'))
+  .sort()
+
+const sql = files
+  .map((file) => {
+    const content = readFileSync(join(migrationsDir, file), 'utf8').trimEnd()
+    return `-- =========================================================\n-- ${file}\n-- =========================================================\n\n${content}`
+  })
+  .join('\n\n\n')
+
+const header = `-- =========================================================
+-- AURA · ESPACIO — esquema completo
+-- Generado automáticamente desde supabase/migrations/.
+-- Ejecutar UNA vez en el SQL Editor del proyecto compartido.
+-- =========================================================
+
+`
+
 mkdirSync(dirname(target), { recursive: true })
-copyFileSync(source, target)
-console.log('✓ public/anotador-schema.sql')
+writeFileSync(target, `${header}${sql}\n`)
+console.log(`✓ public/anotador-schema.sql (${files.length} migraciones)`)

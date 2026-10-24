@@ -10,10 +10,12 @@ import {
   CalendarDays,
   Check,
   Circle,
+  ClipboardList,
   FileText,
   Pencil,
   Plus,
   Save,
+  Sparkles,
   StickyNote,
   Trash2,
 } from 'lucide-react'
@@ -35,29 +37,39 @@ import {
   toggleReading,
   updateCourse,
 } from '@/actions/courses'
+import {
+  assignReadingToAssignment,
+  deleteAssignment,
+  toggleAssignmentDone,
+} from '@/actions/assignments'
 import { toast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/modal'
 import { Segmented } from '@/components/ui/segmented'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ProgressBar, ProgressRing } from '@/components/ui/progress'
 import { CourseFormModal } from '@/components/courses/course-form-modal'
 import { ExamFormModal } from '@/components/courses/exam-form-modal'
+import { AssignmentFormModal } from '@/components/courses/assignment-form-modal'
+import { AssignmentCard } from '@/components/courses/assignment-card'
 import { ExamCard } from '@/components/exams/exam-card'
-import type { Course, Exam, Reading } from '@/types/database'
+import type { Assignment, Course, Exam, Reading } from '@/types/database'
 
-type Tab = 'readings' | 'exams' | 'notes'
+type Tab = 'readings' | 'assignments' | 'exams' | 'notes'
 
 export function CourseDetail({
   course,
   readings,
+  assignments,
   exams,
   today,
 }: {
   course: Course
   readings: Reading[]
+  assignments: Assignment[]
   exams: Exam[]
   today: string
 }) {
@@ -70,10 +82,16 @@ export function CourseDetail({
   const [readingError, setReadingError] = useState<string | null>(null)
   const [examModalOpen, setExamModalOpen] = useState(false)
   const [editingExam, setEditingExam] = useState<Exam | null>(null)
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
+  const [readingAssignmentId, setReadingAssignmentId] = useState('')
   const [notes, setNotes] = useState(course.notes ?? '')
   const [notesSaved, setNotesSaved] = useState(false)
 
   const [doneOverrides, setDoneOverrides] = useState<Record<string, boolean>>({})
+  const [readingAssignmentOverrides, setReadingAssignmentOverrides] = useState<
+    Record<string, string | null>
+  >({})
 
   const baseDoneSet = new Set(readings.filter((r) => r.done).map((r) => r.id))
   const doneSet = new Set(baseDoneSet)
@@ -93,6 +111,14 @@ export function CourseDetail({
   const next = nextExam(exams, today)
   const upcoming = upcomingExams(exams, today)
   const past = pastExams(exams, today)
+  const tpsDone = assignments.filter((assignment) => assignment.done).length
+  const sortedAssignments = [...assignments].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1
+    const aDate = a.due_date ?? '9999-12-31'
+    const bDate = b.due_date ?? '9999-12-31'
+    if (aDate !== bDate) return aDate.localeCompare(bDate)
+    return a.created_at.localeCompare(b.created_at)
+  })
   const readingLines = useMemo(
     () => readingText.split('\n').map((line) => line.trim()).filter(Boolean),
     [readingText]
@@ -106,6 +132,83 @@ export function CourseDetail({
   function openEditExam(exam: Exam) {
     setEditingExam(exam)
     setExamModalOpen(true)
+  }
+
+  function openReadingModal() {
+    setReadingAssignmentId('')
+    setReadingError(null)
+    setReadingModalOpen(true)
+  }
+
+  function openNewAssignment() {
+    setEditingAssignment(null)
+    setAssignmentModalOpen(true)
+  }
+
+  function openEditAssignment(assignment: Assignment) {
+    setEditingAssignment(assignment)
+    setAssignmentModalOpen(true)
+  }
+
+  function handleToggleAssignment(assignment: Assignment) {
+    startTransition(async () => {
+      const result = await toggleAssignmentDone(
+        assignment.id,
+        course.id,
+        !assignment.done
+      )
+      if (result.success) {
+        toast.success(
+          assignment.done
+            ? 'Trabajo práctico marcado como pendiente.'
+            : 'Trabajo práctico completado.'
+        )
+      } else {
+        toast.error(result.error)
+      }
+    })
+  }
+
+  function handleDeleteAssignment(assignment: Assignment) {
+    if (!confirm(`¿Eliminar "${assignment.title}"?`)) return
+    startTransition(async () => {
+      const result = await deleteAssignment(assignment.id, course.id)
+      if (result.success) toast.success('Trabajo práctico eliminado.')
+      else toast.error(result.error)
+    })
+  }
+
+  function effectiveAssignmentId(reading: Reading): string | null {
+    const candidate =
+      reading.id in readingAssignmentOverrides
+        ? readingAssignmentOverrides[reading.id]
+        : reading.assignment_id
+    if (candidate && !assignments.some((assignment) => assignment.id === candidate)) {
+      return null
+    }
+    return candidate
+  }
+
+  function handleAssignReading(reading: Reading, assignmentId: string | null) {
+    setReadingAssignmentOverrides((prev) => ({
+      ...prev,
+      [reading.id]: assignmentId,
+    }))
+    startTransition(async () => {
+      const result = await assignReadingToAssignment(
+        reading.id,
+        course.id,
+        assignmentId
+      )
+      if (!result.success) {
+        setReadingAssignmentOverrides((prev) => {
+          const next = { ...prev }
+          delete next[reading.id]
+          return next
+        })
+        toast.error(result.error)
+      }
+    })
   }
 
   function handleToggleReading(reading: Reading) {
@@ -140,12 +243,17 @@ export function CourseDetail({
       return
     }
     startTransition(async () => {
-      const result = await addReadings(course.id, readingLines)
+      const result = await addReadings(
+        course.id,
+        readingLines,
+        readingAssignmentId || null
+      )
       if (result.success) {
         toast.success(
           `${readingLines.length} ${plural(readingLines.length, 'lectura agregada', 'lecturas agregadas')}.`
         )
         setReadingText('')
+        setReadingAssignmentId('')
         setReadingError(null)
         setReadingModalOpen(false)
       } else {
@@ -301,18 +409,18 @@ export function CourseDetail({
                   </div>
                   <div>
                     <p className="font-display text-base font-semibold tabular-nums">
-                      {grade ?? '—'}
+                      {tpsDone}/{assignments.length}
                     </p>
                     <p className="text-[0.625rem] text-[var(--color-text-muted)]">
-                      Promedio
+                      TPs
                     </p>
                   </div>
                   <div>
                     <p className="font-display text-base font-semibold tabular-nums">
-                      {exams.length}
+                      {grade ?? '—'}
                     </p>
                     <p className="text-[0.625rem] text-[var(--color-text-muted)]">
-                      Exámenes
+                      Promedio
                     </p>
                   </div>
                 </div>
@@ -329,23 +437,46 @@ export function CourseDetail({
           </div>
         </section>
 
-        <div className="flex items-center justify-between gap-3">
-          <Segmented
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: 'readings', label: 'Lecturas', count: readings.length },
-              { value: 'exams', label: 'Exámenes', count: exams.length },
-              { value: 'notes', label: 'Notas' },
-            ]}
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="overflow-x-auto -mx-1 px-1">
+            <Segmented
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'readings', label: 'Lecturas', count: readings.length },
+                { value: 'assignments', label: 'TPs', count: assignments.length },
+                { value: 'exams', label: 'Exámenes', count: exams.length },
+                { value: 'notes', label: 'Notas' },
+              ]}
+            />
+          </div>
           {tab === 'readings' && (
-            <Button size="sm" variant="secondary" onClick={() => setReadingModalOpen(true)}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={openReadingModal}
+              className="self-end sm:self-auto shrink-0"
+            >
               <Plus size={14} /> Lecturas
             </Button>
           )}
+          {tab === 'assignments' && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={openNewAssignment}
+              className="self-end sm:self-auto shrink-0"
+            >
+              <Plus size={14} /> TP
+            </Button>
+          )}
           {tab === 'exams' && (
-            <Button size="sm" variant="secondary" onClick={openNewExam}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={openNewExam}
+              className="self-end sm:self-auto shrink-0"
+            >
               <Plus size={14} /> Examen
             </Button>
           )}
@@ -376,7 +507,7 @@ export function CourseDetail({
                 title="Sin lecturas todavía"
                 description="Cargá la bibliografía o los textos de la materia, uno por línea."
                 action={
-                  <Button size="sm" onClick={() => setReadingModalOpen(true)}>
+                  <Button size="sm" onClick={openReadingModal}>
                     <Plus size={15} /> Agregar lecturas
                   </Button>
                 }
@@ -416,6 +547,29 @@ export function CourseDetail({
                         {reading.title}
                       </p>
 
+                      {assignments.length > 0 && (
+                        <select
+                          value={effectiveAssignmentId(reading) ?? ''}
+                          onChange={(e) =>
+                            handleAssignReading(reading, e.target.value || null)
+                          }
+                          className={cn(
+                            'shrink-0 max-w-[145px] h-7 rounded-[var(--radius-sm)] border px-1.5 text-[0.6875rem] outline-none transition-colors cursor-pointer',
+                            effectiveAssignmentId(reading)
+                              ? 'border-[rgba(143,203,176,0.35)] bg-[var(--color-sage-subtle)] text-[var(--color-text-primary)]'
+                              : 'border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] text-[var(--color-text-muted)]'
+                          )}
+                          aria-label={`Trabajo práctico de ${reading.title}`}
+                        >
+                          <option value="">Sin TP</option>
+                          {assignments.map((assignment) => (
+                            <option key={assignment.id} value={assignment.id}>
+                              {assignment.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
                       <button
                         onClick={() => handleDeleteReading(reading)}
                         className="p-1.5 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors cursor-pointer shrink-0"
@@ -426,6 +580,48 @@ export function CourseDetail({
                     </div>
                   )
                 })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Trabajos prácticos */}
+        {tab === 'assignments' && (
+          <section className="flex flex-col gap-3">
+            <div className="glass-soft rounded-[var(--radius-lg)] p-3.5 flex items-start gap-2.5">
+              <Sparkles size={14} className="text-[var(--color-sage)] mt-0.5 shrink-0" />
+              <p className="text-[0.6875rem] text-[var(--color-text-muted)] leading-relaxed">
+                El brillo suave indica que está listo para hacer: no tiene lecturas
+                conectadas o ya leíste todas. Igual podés marcarlo hecho cuando quieras.
+                Conectá lecturas desde la pestaña Lecturas.
+              </p>
+            </div>
+
+            {assignments.length === 0 ? (
+              <EmptyState
+                icon={<ClipboardList size={26} />}
+                title="Sin trabajos prácticos todavía"
+                description="Creá un TP, conectale lecturas y, si querés, un parcial."
+                action={
+                  <Button size="sm" onClick={openNewAssignment}>
+                    <Plus size={15} /> Crear TP
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {sortedAssignments.map((assignment) => (
+                  <AssignmentCard
+                    key={assignment.id}
+                    assignment={assignment}
+                    readings={readings}
+                    exams={exams}
+                    today={today}
+                    onToggleDone={() => handleToggleAssignment(assignment)}
+                    onEdit={() => openEditAssignment(assignment)}
+                    onDelete={() => handleDeleteAssignment(assignment)}
+                  />
+                ))}
               </div>
             )}
           </section>
@@ -452,6 +648,9 @@ export function CourseDetail({
                       exam={exam}
                       today={today}
                       showCourse={false}
+                      linkedTps={assignments.filter(
+                        (assignment) => assignment.exam_id === exam.id
+                      )}
                       onEdit={() => openEditExam(exam)}
                       onToggleDone={() => handleToggleExam(exam)}
                       onDelete={() => handleDeleteExam(exam)}
@@ -473,6 +672,9 @@ export function CourseDetail({
                       exam={exam}
                       today={today}
                       showCourse={false}
+                      linkedTps={assignments.filter(
+                        (assignment) => assignment.exam_id === exam.id
+                      )}
                       onEdit={() => openEditExam(exam)}
                       onToggleDone={() => handleToggleExam(exam)}
                       onDelete={() => handleDeleteExam(exam)}
@@ -543,6 +745,17 @@ export function CourseDetail({
         />
       )}
 
+      {assignmentModalOpen && (
+        <AssignmentFormModal
+          open
+          onClose={() => setAssignmentModalOpen(false)}
+          courseId={course.id}
+          exams={exams}
+          assignment={editingAssignment}
+          key={editingAssignment?.id ?? 'new'}
+        />
+      )}
+
       <Modal
         open={readingModalOpen}
         onClose={() => setReadingModalOpen(false)}
@@ -558,6 +771,22 @@ export function CourseDetail({
             className="min-h-[180px] font-mono text-[0.8125rem]"
             autoFocus
           />
+
+          {assignments.length > 0 && (
+            <Select
+              label="Conectar a un trabajo práctico (opcional)"
+              value={readingAssignmentId}
+              onChange={(e) => setReadingAssignmentId(e.target.value)}
+              options={[
+                { value: '', label: 'Sin trabajo práctico' },
+                ...assignments.map((assignment) => ({
+                  value: assignment.id,
+                  label: assignment.title,
+                })),
+              ]}
+            />
+          )}
+
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-[var(--color-text-muted)]">
               {readingLines.length}{' '}

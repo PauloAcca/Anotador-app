@@ -3,8 +3,8 @@
 ## Qué es
 PWA personal, hermana de **Aura · Finanzas**, para llevar:
 - hábitos diarios (pastillas, rutinas),
-- materias con lecturas, porcentaje de avance y parciales,
-- exámenes con fechas y notas,
+- materias con lecturas, trabajos prácticos, porcentaje de avance y parciales,
+- exámenes con fechas, notas y TPs conectados,
 - notas rápidas con tags y colores,
 - listas de progreso genéricas (libros, proyectos, series, etc.).
 
@@ -30,8 +30,9 @@ npm run sync-schema # copia la migración a public/anotador-schema.sql
 - El nombre, la zona horaria y el email salen de `profiles` / auth. La foto de perfil se guarda en `auth.users.user_metadata.aura_avatar` y también la usa Finanzas.
 - Los datos propios de cada app NO se mezclan: hábitos, materias, notas y listas viven solo en tablas `anotador_*`.
 - Todas las tablas nuevas llevan prefijo `anotador_` para no chocar con finanzas.
-- La migración canónica vive en `supabase/migrations/00011_anotador_schema.sql`.
-- Si se usa la CLI de Supabase desde `../appFinanzas`, copiar esa migración a su carpeta `supabase/migrations/`.
+- Las migraciones canónicas viven en `supabase/migrations/00011_anotador_schema.sql` y `00012_anotador_assignments.sql`.
+- `public/anotador-schema.sql` se genera concatenando todas las migraciones con `npm run sync-schema`.
+- Si se usa la CLI de Supabase desde `../appFinanzas`, copiar esas migraciones a su carpeta `supabase/migrations/`.
 - El gate `src/components/layout/setup-gate.tsx` detecta si faltan las tablas y muestra el SQL para ejecutar en el dashboard de Supabase.
 
 ## Diseño
@@ -39,6 +40,7 @@ npm run sync-schema # copia la migración a public/anotador-schema.sql
 - Identidad propia de Espacio: acento **iris/lavanda** (`#B8AEE8`) en lugar del salvia de Finanzas.
 - No introducir colores neón ni sombras duras. Reusar utilidades `glass`, `glass-soft`, `glass-strong`, `input-base`, `skeleton`.
 - Los formularios usan `Modal`, `Input`, `Select`, `Button`, `toast`.
+- El brillo de “listo para hacer” usa el utility `tp-glow` en un overlay, no en la tarjeta base.
 
 ## Estructura
 - `src/app/(auth)` login / signup / callback.

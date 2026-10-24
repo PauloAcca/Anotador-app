@@ -48,6 +48,20 @@ export interface CreateReadingInput {
   course_id: string
   title: string
   url?: string | null
+  assignment_id?: string | null
+}
+
+export interface CreateAssignmentInput {
+  course_id: string
+  title: string
+  description?: string | null
+  due_date?: string | null
+  exam_id?: string | null
+  grade?: number | null
+}
+
+export type UpdateAssignmentInput = Partial<CreateAssignmentInput> & {
+  id: string
 }
 
 export interface CreateExamInput {
@@ -118,6 +132,7 @@ export interface HabitView {
 export interface CourseView {
   course: import('./database').Course
   readings: import('./database').Reading[]
+  assignments: import('./database').Assignment[]
   exams: import('./database').Exam[]
 }
 

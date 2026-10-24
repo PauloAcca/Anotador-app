@@ -152,7 +152,8 @@ export async function deleteCourse(id: string): Promise<ActionResult> {
 // =========================================================
 export async function addReadings(
   courseId: string,
-  titles: string[]
+  titles: string[],
+  assignmentId?: string | null
 ): Promise<ActionResult<Reading[]>> {
   const { supabase, user } = await getAuthedClient()
   if (!user) return { success: false, error: 'No autenticado.' }
@@ -163,6 +164,19 @@ export async function addReadings(
   }
   if (!(await assertCourseOwner(supabase, courseId, user.id))) {
     return { success: false, error: 'No se encontró la materia.' }
+  }
+
+  if (assignmentId) {
+    const { data: assignment } = await supabase
+      .from('anotador_assignments')
+      .select('id, course_id')
+      .eq('id', assignmentId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!assignment || assignment.course_id !== courseId) {
+      return { success: false, error: 'El trabajo práctico no pertenece a esta materia.' }
+    }
   }
 
   const { data: last } = await supabase
@@ -178,6 +192,7 @@ export async function addReadings(
   const rows = cleaned.map((title, index) => ({
     user_id: user.id,
     course_id: courseId,
+    assignment_id: assignmentId || null,
     title,
     position: start + index,
   }))

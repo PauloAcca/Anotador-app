@@ -6,8 +6,9 @@ Tu espacio personal, con calma. Una PWA para seguir hábitos, materias, lecturas
 
 - **Hoy**: panel diario con hábitos, próximos exámenes, avance de materias y notas fijadas. Incluye captura rápida de notas.
 - **Hábitos**: pastillas, rutinas o cualquier cosa recurrente. Frecuencia diaria, días específicos o veces por semana, rachas, historial semanal y porcentaje de cumplimiento.
-- **Materias**: lecturas con progreso y porcentaje, parciales con cuenta regresiva, notas de la materia y promedio de notas.
-- **Exámenes**: agenda de todos los parciales, TPs y finales, con fechas, horarios y notas.
+- **Materias**: lecturas con progreso y porcentaje, trabajos prácticos, parciales con cuenta regresiva, notas de la materia y promedio de notas.
+- **Trabajos prácticos**: se conectan lecturas a un TP y TPs a un parcial. El TP brilla suavemente cuando está listo para hacer (sin lecturas o con todas leídas); el parcial brilla cuando no tiene TPs o cuando todos sus TPs están hechos. Igual se pueden marcar hechos sin que brillen.
+- **Exámenes**: agenda de todos los parciales y finales, con fechas, horarios, notas y TPs conectados.
 - **Notas**: notas con título, contenido, colores, tags y fijado.
 - **Listas**: progreso genérico para libros, proyectos, series o lo que se te ocurra.
 - **Ajustes**: perfil, avatar compartido con Aura · Finanzas, exportación JSON de todos tus datos e instalación de la PWA.
@@ -29,7 +30,7 @@ Tu espacio personal, con calma. Una PWA para seguir hábitos, materias, lecturas
 
    O creá `.env.local` a partir de `.env.local.example` con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-3. Creá las tablas nuevas en el Supabase compartido. Abrí el **SQL Editor** del proyecto y ejecutá el contenido de [`supabase/migrations/00011_anotador_schema.sql`](supabase/migrations/00011_anotador_schema.sql). También podés descargarlo desde la app en `/anotador-schema.sql`.
+3. Creá las tablas nuevas en el Supabase compartido. Abrí el **SQL Editor** del proyecto y ejecutá el contenido de [`public/anotador-schema.sql`](public/anotador-schema.sql), que junta las migraciones `00011` y `00012`. También podés descargarlo desde la app en `/anotador-schema.sql`.
 
    > No hace falta volver a ejecutar las migraciones de Finanzas. Las tablas de Espacio usan el prefijo `anotador_` y las políticas RLS propias.
 
@@ -78,8 +79,9 @@ Las tablas se documentan en la migración:
 | `anotador_habits` | hábitos y su frecuencia |
 | `anotador_habit_logs` | check-ins diarios |
 | `anotador_courses` | materias |
-| `anotador_readings` | lecturas de cada materia |
-| `anotador_exams` | parciales, TPs y finales |
+| `anotador_readings` | lecturas de cada materia (opcionalmente conectadas a un TP) |
+| `anotador_assignments` | trabajos prácticos, con lecturas y parcial asociado |
+| `anotador_exams` | parciales y finales |
 | `anotador_notes` | notas libres |
 | `anotador_collections` | listas de progreso |
 | `anotador_collection_items` | ítems de cada lista |

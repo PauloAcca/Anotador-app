@@ -4,6 +4,7 @@ import { DEFAULT_TIMEZONE, addDays, greeting, todayISO } from '@/lib/dates'
 import { buildHabitViews } from '@/lib/progress'
 import { HoyClient } from '@/components/dashboard/hoy-client'
 import type {
+  Assignment,
   Collection,
   CollectionItem,
   Course,
@@ -39,6 +40,7 @@ export default async function HoyPage() {
     { data: logs },
     { data: courses },
     { data: readings },
+    { data: assignments },
     { data: exams },
     { data: notes },
     { data: collections },
@@ -62,6 +64,7 @@ export default async function HoyPage() {
       .eq('archived', false)
       .order('created_at'),
     supabase.from('anotador_readings').select('*').eq('user_id', uid),
+    supabase.from('anotador_assignments').select('*').eq('user_id', uid),
     supabase
       .from('anotador_exams')
       .select('*, course:anotador_courses!course_id(id, name, color, icon)')
@@ -95,6 +98,7 @@ export default async function HoyPage() {
 
   const realCourses = (courses ?? []) as Course[]
   const realReadings = (readings ?? []) as Reading[]
+  const realAssignments = (assignments ?? []) as Assignment[]
   const realExams = (exams ?? []) as Exam[]
   const realNotes = (notes ?? []) as Note[]
 
@@ -114,6 +118,7 @@ export default async function HoyPage() {
       habits={habitViews}
       courses={realCourses}
       readings={realReadings}
+      assignments={realAssignments}
       exams={realExams}
       notes={realNotes}
       collections={collectionViews}

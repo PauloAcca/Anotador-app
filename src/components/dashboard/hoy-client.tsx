@@ -36,7 +36,7 @@ import { toast } from '@/components/ui/toast'
 import { ProgressBar, ProgressRing } from '@/components/ui/progress'
 import { NOTE_COLORS } from '@/lib/constants'
 import type { HabitView, CollectionView } from '@/types'
-import type { Course, Exam, Note, Reading } from '@/types/database'
+import type { Assignment, Course, Exam, Note, Reading } from '@/types/database'
 
 // =========================================================
 // Tipos
@@ -48,6 +48,7 @@ interface HoyClientProps {
   habits: HabitView[]
   courses: Course[]
   readings: Reading[]
+  assignments: Assignment[]
   exams: Exam[]
   notes: Note[]
   collections: CollectionView[]
@@ -65,6 +66,7 @@ export function HoyClient({
   habits,
   courses,
   readings,
+  assignments,
   exams,
   notes,
   collections,
@@ -367,7 +369,14 @@ export function HoyClient({
         ) : (
           <div className="flex flex-col gap-2">
             {upcoming.slice(0, 3).map((exam) => (
-              <ExamRow key={exam.id} exam={exam} today={today} />
+              <ExamRow
+                key={exam.id}
+                exam={exam}
+                today={today}
+                linkedTps={assignments.filter(
+                  (assignment) => assignment.exam_id === exam.id
+                )}
+              />
             ))}
           </div>
         )}
@@ -574,7 +583,16 @@ function MiniStat({
   )
 }
 
-function ExamRow({ exam, today }: { exam: Exam; today: string }) {
+function ExamRow({
+  exam,
+  today,
+  linkedTps,
+}: {
+  exam: Exam
+  today: string
+  linkedTps: Assignment[]
+}) {
+  const tpsDone = linkedTps.filter((tp) => tp.done).length
   const date = parseISODate(exam.exam_date)
   const delta = diffDays(today, exam.exam_date)
   const soon = delta >= 0 && delta <= 3
@@ -607,6 +625,11 @@ function ExamRow({ exam, today }: { exam: Exam; today: string }) {
             </>
           )}
           {!exam.course && <span>Examen</span>}
+          {linkedTps.length > 0 && (
+            <span className="text-[0.625rem] text-[var(--color-text-muted)]">
+              TPs {tpsDone}/{linkedTps.length}
+            </span>
+          )}
         </p>
       </div>
 

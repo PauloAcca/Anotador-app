@@ -2,9 +2,11 @@
 
 import {
   Check,
+  Circle,
   Clock,
   MapPin,
   Pencil,
+  Sparkles,
   Trash2,
   Undo2,
 } from 'lucide-react'
@@ -18,13 +20,14 @@ import {
 } from '@/lib/dates'
 import { EXAM_KIND_LABELS } from '@/lib/constants'
 import { Badge } from '@/components/ui/badge'
-import type { Course, Exam } from '@/types/database'
+import type { Assignment, Course, Exam } from '@/types/database'
 
 export function ExamCard({
   exam,
   today,
   course,
   showCourse = true,
+  linkedTps = [],
   onEdit,
   onToggleDone,
   onDelete,
@@ -33,6 +36,7 @@ export function ExamCard({
   today: string
   course?: Pick<Course, 'id' | 'name' | 'color' | 'icon'> | null
   showCourse?: boolean
+  linkedTps?: Assignment[]
   onEdit: () => void
   onToggleDone: () => void
   onDelete: () => void
@@ -42,14 +46,24 @@ export function ExamCard({
   const soon = !exam.done && delta >= 0 && delta <= 3
   const passed = !exam.done && delta < 0
   const courseData = course ?? exam.course
+  const tpsDone = linkedTps.filter((tp) => tp.done).length
+  const allTpsDone = linkedTps.length === 0 || tpsDone === linkedTps.length
+  const ready = !exam.done && allTpsDone
 
   return (
     <div
       className={cn(
-        'glass-soft rounded-[var(--radius-lg)] p-3.5 flex items-center gap-3.5',
+        'relative glass-soft rounded-[var(--radius-lg)] p-3.5 flex items-center gap-3.5',
         exam.done && 'opacity-60'
       )}
     >
+      {ready && (
+        <span
+          aria-hidden="true"
+          className="tp-glow pointer-events-none absolute inset-0 rounded-[var(--radius-lg)]"
+        />
+      )}
+
       <div className="w-12 h-12 rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.09)] flex flex-col items-center justify-center shrink-0">
         <span className="text-[0.5625rem] uppercase tracking-wider text-[var(--color-text-muted)] leading-none">
           {MONTH_SHORT[date.getUTCMonth()]}
@@ -77,6 +91,19 @@ export function ExamCard({
               <Check size={10} /> Hecho
             </Badge>
           )}
+          {ready && !exam.done && linkedTps.length > 0 && (
+            <Badge variant="sage" className="text-[0.625rem]">
+              <Sparkles size={10} /> Listo
+            </Badge>
+          )}
+          {linkedTps.length > 0 && (
+            <Badge
+              variant={allTpsDone ? 'sage' : 'muted'}
+              className="text-[0.625rem]"
+            >
+              TPs {tpsDone}/{linkedTps.length}
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap mt-1 text-[0.6875rem] text-[var(--color-text-muted)]">
@@ -100,6 +127,25 @@ export function ExamCard({
             </span>
           )}
         </div>
+
+        {linkedTps.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {linkedTps.map((tp) => (
+              <span
+                key={tp.id}
+                className={cn(
+                  'inline-flex items-center gap-1 text-[0.625rem] px-1.5 py-0.5 rounded-full border max-w-[170px]',
+                  tp.done
+                    ? 'bg-[var(--color-success-subtle)] text-[var(--color-success)] border-[rgba(127,217,164,0.2)]'
+                    : 'bg-[rgba(255,255,255,0.04)] text-[var(--color-text-muted)] border-[rgba(255,255,255,0.08)]'
+                )}
+              >
+                {tp.done ? <Check size={9} /> : <Circle size={7} />}
+                <span className="truncate">{tp.title}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-end gap-1.5 shrink-0">

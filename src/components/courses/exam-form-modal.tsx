@@ -41,6 +41,12 @@ export function ExamFormModal({
   const [grade, setGrade] = useState(exam?.grade?.toString() ?? '')
   const [notes, setNotes] = useState(exam?.notes ?? '')
 
+  // Los TPs ahora se gestionan aparte; mantenemos la opción solo si
+  // el examen existente ya tenía ese tipo.
+  const kindOptions = Object.entries(EXAM_KIND_LABELS)
+    .filter(([value]) => value !== 'tp' || exam?.kind === 'tp')
+    .map(([value, label]) => ({ value, label }))
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!courseId) {
@@ -136,10 +142,7 @@ export function ExamFormModal({
             label="Tipo"
             value={kind}
             onChange={(e) => setKind(e.target.value as ExamKind)}
-            options={Object.entries(EXAM_KIND_LABELS).map(([value, label]) => ({
-              value,
-              label,
-            }))}
+            options={kindOptions}
           />
           <Input
             label="Nota (opcional)"

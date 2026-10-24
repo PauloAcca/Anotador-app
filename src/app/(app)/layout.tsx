@@ -33,12 +33,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ? metadataAvatar
         : undefined
 
-  const { error: schemaError } = await supabase
-    .from('anotador_habits')
-    .select('id', { head: true, count: 'exact' })
-    .limit(1)
+  const [{ error: habitsError }, { error: assignmentsError }] = await Promise.all([
+    supabase
+      .from('anotador_habits')
+      .select('id', { head: true, count: 'exact' })
+      .limit(1),
+    supabase
+      .from('anotador_assignments')
+      .select('id', { head: true, count: 'exact' })
+      .limit(1),
+  ])
 
-  if (isMissingTableError(schemaError)) {
+  if (isMissingTableError(habitsError) || isMissingTableError(assignmentsError)) {
     return (
       <>
         <SetupGate displayName={displayName} />
