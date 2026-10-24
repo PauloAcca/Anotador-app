@@ -280,8 +280,9 @@ export function SettingsClient({
           </ButtonLink>
         </div>
         <p className="text-[0.6875rem] text-[var(--color-text-muted)]">
-          La exportación incluye todos tus hábitos, materias, lecturas, exámenes,
-          notas y listas. Las tablas viven en el mismo Supabase que Finanzas.
+          La exportación incluye todos tus hábitos, materias, lecturas, trabajos
+          prácticos, exámenes, notas y listas. Las tablas viven en el mismo Supabase
+          que Finanzas.
         </p>
       </section>
 
