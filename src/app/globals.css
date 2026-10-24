@@ -1,0 +1,332 @@
+@import "tailwindcss";
+
+/* =========================================================
+   AURA · ESPACIO — Design tokens
+   Hermana de Aura Finanzas: mismo vidrio sereno y tipografías,
+   con acento iris/lavanda y un aire un poco más libre.
+   ========================================================= */
+@theme {
+  /* Tipografía — Outfit (UI) + Fraunces (display) */
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-outfit), ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+
+  /* Fondo y vidrio */
+  --color-background: #0A0E14;
+  --color-surface: rgba(255, 255, 255, 0.045);
+  --color-surface-2: rgba(255, 255, 255, 0.07);
+  --color-surface-3: rgba(255, 255, 255, 0.1);
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-border-subtle: rgba(255, 255, 255, 0.055);
+
+  /* Texto — off-white con un dejo lavanda */
+  --color-text-primary: #F2F0F7;
+  --color-text-secondary: #A8A3B8;
+  --color-text-muted: #6C677C;
+
+  /* Acento — iris / lavanda serena */
+  --color-accent: #B8AEE8;
+  --color-accent-hover: #CAC2F2;
+  --color-accent-subtle: rgba(184, 174, 232, 0.14);
+  --color-accent-foreground: #0A0E14;
+
+  /* Secundario — salvia, guiño a Finanzas */
+  --color-sage: #8FCBB0;
+  --color-sage-hover: #A5D8C3;
+  --color-sage-subtle: rgba(143, 203, 176, 0.14);
+
+  /* Semánticos — desaturados, en calma */
+  --color-success: #7FD9A4;
+  --color-success-subtle: rgba(127, 217, 164, 0.16);
+  --color-danger: #E3A0AA;
+  --color-danger-subtle: rgba(227, 160, 170, 0.16);
+  --color-warning: #E4C28F;
+  --color-warning-subtle: rgba(228, 194, 143, 0.16);
+  --color-info: #A6B9E8;
+  --color-info-subtle: rgba(166, 185, 232, 0.16);
+
+  /* Radios generosos */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Sombras difusas */
+  --shadow-sm: 0 1px 2px rgba(4, 8, 12, 0.25);
+  --shadow-md: 0 6px 20px rgba(4, 8, 12, 0.3);
+  --shadow-lg: 0 16px 48px rgba(4, 8, 12, 0.42);
+
+  /* Animaciones lentas */
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-scale-in: scale-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in: slide-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-drift-a: drift-a 34s ease-in-out infinite alternate;
+  --animate-drift-b: drift-b 44s ease-in-out infinite alternate;
+  --animate-drift-c: drift-c 52s ease-in-out infinite alternate;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+}
+
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--color-text-primary);
+  overscroll-behavior-y: none;
+}
+
+::selection {
+  background: rgba(184, 174, 232, 0.28);
+  color: #F2F0F7;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+/* =========================================================
+   FOCUS VISIBLE
+   ========================================================= */
+:focus-visible {
+  outline: 2px solid rgba(184, 174, 232, 0.9);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* =========================================================
+   VIDRIO — tres niveles
+   ========================================================= */
+@utility glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(3, 6, 10, 0.35);
+}
+
+@utility glass-soft {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@utility glass-strong {
+  background: rgba(22, 27, 34, 0.62);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 64px rgba(2, 5, 10, 0.55);
+}
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+@utility input-base {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  font-weight: 400;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  outline: none;
+}
+
+.input-base::placeholder { color: var(--color-text-muted); }
+
+.input-base:focus {
+  border-color: rgba(184, 174, 232, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 4px rgba(184, 174, 232, 0.12);
+}
+
+.input-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+textarea.input-base {
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   SWITCH — píldora serena
+   ========================================================= */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: #A8A3B8;
+  transform: translateY(-50%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.switch input:checked ~ .switch-track {
+  background: var(--color-accent-subtle);
+  border-color: rgba(184, 174, 232, 0.5);
+}
+
+.switch input:checked ~ .switch-track .switch-thumb {
+  transform: translateY(-50%) translateX(20px);
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(184, 174, 232, 0.18);
+}
+
+.switch input:focus-visible ~ .switch-track {
+  outline: 2px solid rgba(184, 174, 232, 0.9);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   SKELETON
+   ========================================================= */
+@utility skeleton {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 60%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* =========================================================
+   NOTAS — masonry suave sin dependencias
+   ========================================================= */
+@utility note-columns {
+  column-count: 1;
+  column-gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .note-columns { column-count: 2; }
+}
+
+@media (min-width: 1024px) {
+  .note-columns { column-count: 3; }
+}
+
+.note-columns > * {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+
+/* =========================================================
+   KEYFRAMES
+   ========================================================= */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drift-a {
+  from { transform: translate3d(-4%, -3%, 0) scale(1); }
+  to { transform: translate3d(4%, 3%, 0) scale(1.08); }
+}
+
+@keyframes drift-b {
+  from { transform: translate3d(3%, 2%, 0) scale(1.05); }
+  to { transform: translate3d(-3%, -3%, 0) scale(1); }
+}
+
+@keyframes drift-c {
+  from { transform: translate3d(0, 3%, 0) scale(1); }
+  to { transform: translate3d(2%, -3%, 0) scale(1.06); }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* =========================================================
+   MOVIMIENTO REDUCIDO
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,63 @@
+'use client'
+
+import { cn } from '@/lib/utils'
+import { type InputHTMLAttributes, forwardRef, useId } from 'react'
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string
+  error?: string
+  helper?: string
+  leftIcon?: React.ReactNode
+  rightIcon?: React.ReactNode
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helper, leftIcon, rightIcon, className, id, ...props }, ref) => {
+    const generatedId = useId()
+    const inputId = id || `input-${generatedId}`
+
+    return (
+      <div className="flex flex-col gap-1.5 w-full">
+        {label && (
+          <label
+            htmlFor={inputId}
+            className="text-xs font-medium text-[var(--color-text-secondary)]"
+          >
+            {label}
+          </label>
+        )}
+        <div className="relative flex items-center">
+          {leftIcon && (
+            <span className="absolute left-3 text-[var(--color-text-muted)] pointer-events-none">
+              {leftIcon}
+            </span>
+          )}
+          <input
+            ref={ref}
+            id={inputId}
+            className={cn(
+              'input-base',
+              leftIcon && 'pl-9',
+              rightIcon && 'pr-9',
+              error &&
+                'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:shadow-[0_0_0_4px_rgba(227,160,170,0.15)]',
+              className
+            )}
+            {...props}
+          />
+          {rightIcon && (
+            <span className="absolute right-3 text-[var(--color-text-muted)] pointer-events-none">
+              {rightIcon}
+            </span>
+          )}
+        </div>
+        {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
+        {helper && !error && (
+          <p className="text-xs text-[var(--color-text-muted)]">{helper}</p>
+        )}
+      </div>
+    )
+  }
+)
+
+Input.displayName = 'Input'
