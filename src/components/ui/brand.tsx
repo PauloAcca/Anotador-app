@@ -21,9 +21,27 @@ export function BrandMark({
     >
       <defs>
         <linearGradient id="espacio-brand-gradient" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#B8AEE8" />
-          <stop offset="1" stopColor="#8FCBB0" />
+          <stop offset="0" stopColor="#8E7DDC" />
+          <stop offset="1" stopColor="#66BA97" />
         </linearGradient>
+        <filter
+          id="espacio-brand-glow"
+          x="-40%"
+          y="-40%"
+          width="180%"
+          height="180%"
+        >
+          <feGaussianBlur stdDeviation="1.4" />
+        </filter>
+        {/* Renglones: punto + línea */}
+        <g id="espacio-brand-rows">
+          <circle cx="15.5" cy="17.5" r="2.1" />
+          <rect x="20.5" y="15.7" width="13" height="3.6" rx="1.8" />
+          <circle cx="15.5" cy="24" r="2.1" />
+          <rect x="20.5" y="22.2" width="10" height="3.6" rx="1.8" />
+          <circle cx="15.5" cy="30.5" r="2.1" />
+          <rect x="20.5" y="28.7" width="12" height="3.6" rx="1.8" />
+        </g>
       </defs>
       <rect
         x="3"
@@ -43,20 +61,12 @@ export function BrandMark({
         stroke="rgba(255,255,255,0.25)"
         strokeWidth="1"
       />
-      {/* Renglones: punto + línea */}
-      <g fill="rgba(10,14,20,0.78)">
-        <circle cx="15.5" cy="17.5" r="2.1" />
-        <rect x="20.5" y="15.7" width="13" height="3.6" rx="1.8" />
-        <circle cx="15.5" cy="24" r="2.1" />
-        <rect x="20.5" y="22.2" width="10" height="3.6" rx="1.8" />
-        <circle cx="15.5" cy="30.5" r="2.1" />
-        <rect x="20.5" y="28.7" width="12" height="3.6" rx="1.8" />
-      </g>
-      <g fill="rgba(255,255,255,0.32)">
-        <circle cx="15.5" cy="17.5" r="0.9" />
-        <circle cx="15.5" cy="24" r="0.9" />
-        <circle cx="15.5" cy="30.5" r="0.9" />
-      </g>
+      <use
+        href="#espacio-brand-rows"
+        fill="rgba(255,255,255,0.5)"
+        filter="url(#espacio-brand-glow)"
+      />
+      <use href="#espacio-brand-rows" fill="rgba(255,255,255,0.96)" />
     </svg>
   )
 }

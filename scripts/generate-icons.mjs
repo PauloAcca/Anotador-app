@@ -1,7 +1,8 @@
 /**
  * Genera los iconos de Aura · Espacio sin dependencias:
- * cuadrado redondeado con gradiente iris→salvia y tres renglones
- * (el glifo del anotador). PNG encoder propio con zlib de Node.
+ * cuadrado redondeado con gradiente iris→salvia y el glifo del anotador
+ * (tres renglones con viñeta) en blanco con halo, en la misma línea
+ * visual que el aro de Aura · Finanzas. PNG encoder propio con zlib de Node.
  *
  *   node scripts/generate-icons.mjs
  */
@@ -82,9 +83,9 @@ const hex = (value) => [
   parseInt(value.slice(3, 5), 16),
   parseInt(value.slice(5, 7), 16),
 ]
-const C1 = hex('#B8AEE8') // iris
-const C2 = hex('#8FCBB0') // salvia
-const GLYPH = hex('#0A0E14')
+const C1 = hex('#8E7DDC') // iris profundo
+const C2 = hex('#66BA97') // salvia
+const WHITE = [255, 255, 255]
 
 const lerp = (a, b, t) => a + (b - a) * t
 const clamp01 = (value) => Math.min(1, Math.max(0, value))
@@ -98,71 +99,95 @@ function sdRoundRect(x, y, cx, cy, hw, hh, r) {
   return Math.min(Math.max(dx, dy), 0) + Math.hypot(ax, ay) - r
 }
 
+// Renglones del anotador: viñeta + línea, en coordenadas unitarias.
+const DOT_X = 0.3
+const DOT_R = 0.0235
+const BAR_X0 = 0.348
+const BAR_H = 0.027
+const ROWS = [
+  { y: 0.378, end: 0.7 },
+  { y: 0.5, end: 0.645 },
+  { y: 0.622, end: 0.678 },
+]
+
+// Distancia mínima (en unidades) al glifo completo.
+function glyphDistance(x, y, barH, dotR) {
+  let d = Infinity
+  for (const row of ROWS) {
+    d = Math.min(d, Math.hypot(x - DOT_X, y - row.y) - dotR)
+    const cx = (BAR_X0 + row.end) / 2
+    const hw = (row.end - BAR_X0) / 2
+    d = Math.min(d, sdRoundRect(x, y, cx, row.y, hw, barH / 2, barH / 2))
+  }
+  return d
+}
+
 function render(size, { maskable = false } = {}) {
   const px = Buffer.alloc(size * size * 4)
   const S = 1 / size
-  const margin = 3 * S
-  const half = 0.5 - margin
-  const corner = 0.225 * (0.5 + half)
-  const scale = maskable ? 0.82 : 1
-
-  // Tres renglones: punto + línea.
-  const rows = [
-    { y: 0.375, lineEnd: 0.685 },
-    { y: 0.5, lineEnd: 0.635 },
-    { y: 0.625, lineEnd: 0.67 },
-  ]
+  // Maskable: fondo a sangre (el sistema recorta la forma); el resto, cuadrado redondeado.
+  const half = maskable ? 0.5 : 0.5 - 3 * S
+  const corner = maskable ? 0 : 0.225 * (0.5 + half)
+  const scale = maskable ? 0.8 : 1
+  const glowR = 0.024 * scale
+  const glowStrength = 0.34
+  // A tamaños chicos el trazo se engrosa para no desaparecer (favicon).
+  const minStrokePx = 1.25
+  const barH = Math.max(BAR_H, minStrokePx / (size * scale))
+  const dotR = Math.max(DOT_R, barH * 0.95)
 
   for (let py = 0; py < size; py++) {
     for (let pxIndex = 0; pxIndex < size; pxIndex++) {
       const x = (pxIndex + 0.5) * S
       const y = (py + 0.5) * S
 
-      const rectD = sdRoundRect(x, y, 0.5, 0.5, half, half, corner) * size
-      const alphaRect = cov(rectD)
+      const rectD = maskable
+        ? -1
+        : sdRoundRect(x, y, 0.5, 0.5, half, half, corner) * size
+      const alphaRect = maskable ? 1 : cov(rectD)
       if (alphaRect <= 0) continue
 
-      const t = clamp01(x * 0.65 + y * 0.35)
+      // Gradiente diagonal iris → salvia
+      const t = clamp01(x * 0.56 + y * 0.44)
       let r = lerp(C1[0], C2[0], t)
       let g = lerp(C1[1], C2[1], t)
       let b = lerp(C1[2], C2[2], t)
 
+      // Luz de vidrio arriba a la izquierda
       const sheen =
-        Math.max(0, 1 - Math.hypot((x - 0.3) * 2.2, (y - 0.25) * 2.2)) * 0.16
+        Math.max(0, 1 - Math.hypot((x - 0.3) * 2.2, (y - 0.24) * 2.2)) * 0.12
       r += (255 - r) * sheen
       g += (255 - g) * sheen
       b += (255 - b) * sheen
 
+      // Aurora tenue abajo a la derecha, para que el fondo tenga aire Aura
+      const aurora = Math.max(0, 1 - Math.hypot(x - 0.82, y - 0.84) * 2.4) * 0.1
+      r += (255 - r) * aurora * 0.4
+      g += (255 - g) * aurora * 0.7
+      b += (176 - b) * aurora
+
       let alpha = alphaRect
 
-      // Glifo: puntos y renglones centrados con escala.
+      // Glifo: halo blanco difuso + renglones nítidos
       const gx = (x - 0.5) / scale + 0.5
       const gy = (y - 0.5) / scale + 0.5
+      const d = glyphDistance(gx, gy, barH, dotR)
+      const dPx = d * size * scale
 
-      let glyphCoverage = 0
-      for (const row of rows) {
-        const dot = cov((Math.hypot(gx - 0.335, gy - row.y) - 0.018) * size * scale)
-        const line = cov(
-          sdRoundRect(
-            gx,
-            gy,
-            0.335 + 0.03 + (row.lineEnd - 0.365) / 2,
-            row.y,
-            (row.lineEnd - 0.365) / 2,
-            0.018,
-            0.018
-          ) *
-            size *
-            scale
-        )
-        glyphCoverage = Math.max(glyphCoverage, dot, line)
+      const glow = d > 0 ? Math.exp(-Math.pow(d / glowR, 2)) * glowStrength : 0
+      if (glow > 0.001) {
+        const ga = glow * alpha
+        r += (WHITE[0] - r) * ga
+        g += (WHITE[1] - g) * ga
+        b += (WHITE[2] - b) * ga
       }
 
-      if (glyphCoverage > 0) {
-        const outAlpha = glyphCoverage + alpha * (1 - glyphCoverage)
-        r = (GLYPH[0] * glyphCoverage + r * alpha * (1 - glyphCoverage)) / (outAlpha || 1)
-        g = (GLYPH[1] * glyphCoverage + g * alpha * (1 - glyphCoverage)) / (outAlpha || 1)
-        b = (GLYPH[2] * glyphCoverage + b * alpha * (1 - glyphCoverage)) / (outAlpha || 1)
+      const glyph = cov(dPx)
+      if (glyph > 0) {
+        const outAlpha = glyph * 0.98 + alpha * (1 - glyph * 0.98)
+        r = (WHITE[0] * glyph * 0.98 + r * alpha * (1 - glyph * 0.98)) / (outAlpha || 1)
+        g = (WHITE[1] * glyph * 0.98 + g * alpha * (1 - glyph * 0.98)) / (outAlpha || 1)
+        b = (WHITE[2] * glyph * 0.98 + b * alpha * (1 - glyph * 0.98)) / (outAlpha || 1)
         alpha = outAlpha
       }
 
